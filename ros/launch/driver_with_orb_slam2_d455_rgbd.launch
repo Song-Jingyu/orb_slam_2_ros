@@ -1,0 +1,137 @@
+<launch>
+  <arg name="serial_no"           default=""/>
+  <arg name="json_file_path"      default=""/>
+  <arg name="camera"              default="camera"/>
+  <arg name="tf_prefix"           default="$(arg camera)"/>
+
+  <arg name="fisheye_width"       default="640"/>
+  <arg name="fisheye_height"      default="480"/>
+  <arg name="enable_fisheye"      default="true"/>
+
+  <arg name="depth_width"         default="640"/>
+  <arg name="depth_height"        default="480"/>
+  <arg name="enable_depth"        default="true"/>
+
+  <arg name="infra_width"         default="640"/>
+  <arg name="infra_height"        default="480"/>
+  <arg name="enable_infra1"       default="true"/>
+  <arg name="enable_infra2"       default="true"/>
+
+  <arg name="color_width"         default="640"/>
+  <arg name="color_height"        default="480"/>
+  <arg name="enable_color"        default="true"/>
+
+  <arg name="fisheye_fps"         default="30"/>
+  <arg name="depth_fps"           default="30"/>
+  <arg name="infra_fps"           default="30"/>
+  <arg name="color_fps"           default="30"/>
+  <arg name="gyro_fps"            default="400"/>
+  <arg name="accel_fps"           default="250"/>
+  <arg name="enable_gyro"         default="true"/>
+  <arg name="enable_accel"        default="true"/>
+
+  <arg name="enable_pointcloud"   default="false"/>
+  <arg name="enable_sync"         default="true"/>
+  <arg name="align_depth"         default="true"/>
+
+  <arg name="filters"             default=""/>
+
+  <group ns="$(arg camera)">
+    <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="tf_prefix"                value="$(arg tf_prefix)"/>
+      <arg name="serial_no"                value="$(arg serial_no)"/>
+      <arg name="json_file_path"           value="$(arg json_file_path)"/>
+
+      <arg name="enable_pointcloud"        value="$(arg enable_pointcloud)"/>
+      <arg name="enable_sync"              value="$(arg enable_sync)"/>
+      <arg name="align_depth"              value="$(arg align_depth)"/>
+
+      <arg name="fisheye_width"            value="$(arg fisheye_width)"/>
+      <arg name="fisheye_height"           value="$(arg fisheye_height)"/>
+      <arg name="enable_fisheye"           value="$(arg enable_fisheye)"/>
+
+      <arg name="depth_width"              value="$(arg depth_width)"/>
+      <arg name="depth_height"             value="$(arg depth_height)"/>
+      <arg name="enable_depth"             value="$(arg enable_depth)"/>
+
+      <arg name="color_width"              value="$(arg color_width)"/>
+      <arg name="color_height"             value="$(arg color_height)"/>
+      <arg name="enable_color"             value="$(arg enable_color)"/>
+
+      <arg name="infra_width"              value="$(arg infra_width)"/>
+      <arg name="infra_height"             value="$(arg infra_height)"/>
+      <arg name="enable_infra1"            value="$(arg enable_infra1)"/>
+      <arg name="enable_infra2"            value="$(arg enable_infra2)"/>
+
+      <arg name="fisheye_fps"              value="$(arg fisheye_fps)"/>
+      <arg name="depth_fps"                value="$(arg depth_fps)"/>
+      <arg name="infra_fps"                value="$(arg infra_fps)"/>
+      <arg name="color_fps"                value="$(arg color_fps)"/>
+      <arg name="gyro_fps"                 value="$(arg gyro_fps)"/>
+      <arg name="accel_fps"                value="$(arg accel_fps)"/>
+      <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
+      <arg name="enable_accel"             value="$(arg enable_accel)"/>
+
+      <arg name="filters"                  value="$(arg filters)"/>
+    </include>
+  </group>
+
+
+  <node name="orb_slam2_rgbd" pkg="orb_slam2_ros"
+      type="orb_slam2_ros_rgbd" output="screen">
+
+       <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw" />
+       <remap from="/camera/depth_registered/image_raw" to="/camera/aligned_depth_to_color/image_raw" />
+
+       <param name="publish_pointcloud" type="bool" value="true" />
+       <param name="publish_pose" type="bool" value="true" />
+       <param name="localize_only" type="bool" value="false" />
+       <param name="reset_map" type="bool" value="false" />
+
+       <!-- static parameters -->
+       <param name="load_map" type="bool" value="false" />
+       <param name="map_file" type="string" value="map.bin" />
+       <param name="voc_file" type="string" value="$(find orb_slam2_ros)/orb_slam2/Vocabulary/ORBvoc.txt" />
+
+       <param name="pointcloud_frame_id" type="string" value="odom" />
+       <param name="camera_frame_id" type="string" value="camera_color_optical_frame" />
+       <param name="min_num_kf_in_map" type="int" value="5" />
+
+       <!-- ORB parameters -->
+       <param name="/ORBextractor/nFeatures" type="int" value="1000" />
+       <param name="/ORBextractor/scaleFactor" type="double" value="1.2" />
+       <param name="/ORBextractor/nLevels" type="int" value="8" />
+       <param name="/ORBextractor/iniThFAST" type="int" value="20" />
+       <param name="/ORBextractor/minThFAST" type="int" value="7" />
+
+       <!-- Camera parameters -->
+       <!-- Camera frames per second -->
+       <param name="camera_fps" type="int" value="30" />
+       <!-- Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale) -->
+       <param name="camera_rgb_encoding" type="bool" value="true" />
+       <!-- Close/Far threshold. Baseline times. -->
+       <param name="ThDepth" type="double" value="6.0" />
+       <!-- Deptmap values factor (what pixel value in the depth image corresponds to 1m) -->
+       <param name="depth_map_factor" type="double" value="1000.0" />
+
+        <!-- Camera calibration parameters -->
+        <!--If the node should wait for a camera_info topic to take the camera calibration data-->
+       <param name="load_calibration_from_cam" type="bool" value="false" />
+       <!-- Camera calibration and distortion parameters (OpenCV) -->
+      <param name="camera_fx" type="double" value="383.14105224609375" />
+      <param name="camera_fy" type="double" value="382.9080505371094" />
+      <param name="camera_cx" type="double" value="318.244140625" />
+      <param name="camera_cy" type="double" value="246.71755981445312" />
+       <!-- Camera calibration and distortion parameters (OpenCV) -->
+      <param name="camera_k1" type="double" value="-0.05610819160938263" />
+      <param name="camera_k2" type="double" value="0.0640198141336441" />
+      <param name="camera_p1" type="double" value="-0.000168900252901949" />
+      <param name="camera_p2" type="double" value="0.00010549488797551021" />
+      <param name="camera_k3" type="double" value="-0.020464885979890823" />
+      <!-- IR projector baseline times fx (aprox.) -->
+      <param name="camera_baseline" type="double" value="36.7" />
+
+  </node>
+
+
+</launch>
